@@ -1,7 +1,7 @@
 # financial_app/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Sum
 from .models import Company, Client, Invoice, Expense
@@ -9,7 +9,12 @@ from datetime import datetime
 
 @login_required
 def dashboard(request):
-    company = get_object_or_404(Company, owner=request.user)
+    try:
+        company = Company.objects.get(owner=request.user)
+    except Company.DoesNotExist:
+        # Redirect to a page where the user can create a Company or show an appropriate message
+        return render(request, 'financial_app/no_company.html')
+
     total_invoices = Invoice.objects.filter(company=company).count()
     pending_amount = Invoice.objects.filter(
         company=company, 
