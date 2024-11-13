@@ -5,12 +5,14 @@
 {% block content %}
 <div class="container">
     <!-- Hero Image -->
-    <img src="{% static 'images/dashboard_workspace_hero.jpg' %}" alt="Workspace Image" class="img-fluid rounded mb-4">
+    <div class="hero-image-container text-center mb-4">
+        <img src="{% static 'images/dashboard_workspace_hero.jpg' %}" alt="Workspace Image" class="img-fluid rounded hero-image">
+    </div>
 
     <!-- Dashboard Cards -->
-    <div class="row">
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm mb-4 text-center">
+    <div class="row text-center">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <img src="{% static 'images/icon_total_invoices.jpg' %}" alt="Total Invoices Icon" class="img-fluid mb-2" style="max-width: 50px;">
                     <h5 class="card-title">Total Invoices</h5>
@@ -18,8 +20,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm mb-4 text-center">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <img src="{% static 'images/icon_pending_amount.jpg' %}" alt="Pending Amount Icon" class="img-fluid mb-2" style="max-width: 50px;">
                     <h5 class="card-title">Pending Amount</h5>
@@ -27,8 +29,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm mb-4 text-center">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <img src="{% static 'images/icon_monthly_expenses.jpg' %}" alt="Monthly Expenses Icon" class="img-fluid mb-2" style="max-width: 50px;">
                     <h5 class="card-title">Monthly Expenses</h5>

@@ -1,0 +1,52 @@
+/* Color variables */
+:root {
+    --soft-green: #8BC34A;
+    --dark-green: #558B2F;
+    --light-gray: #F5F5F5;
+    --text-dark: #333333;
+}
+
+/* General Styles */
+body {
+    background-color: var(--light-gray);
+    color: var(--text-dark);
+}
+
+.navbar, .footer {
+    background-color: var(--soft-green);
+}
+
+.navbar-brand, .footer-text {
+    color: #FFFFFF;
+}
+
+.btn-primary {
+    background-color: var(--dark-green);
+    border-color: var(--dark-green);
+}
+
+.btn-primary:hover {
+    background-color: #6BA539;
+    border-color: #6BA539;
+}
+
+.content {
+    padding: 20px;
+}
+
+/* Dashboard Specific Styles */
+.hero-image-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-image {
+    max-height: 400px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.card {
+    max-width: 300px;
+    margin: 0 auto;
+}
