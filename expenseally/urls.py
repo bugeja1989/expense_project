@@ -7,4 +7,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('dashboard', permanent=True)),  # Root path redirects to dashboard
     path('', include('financial_app.urls')),  # Includes all URLs from financial_app
+    path('accounts/', include('django.contrib.auth.urls')),  # Adds login, logout, and password management URLs
 ]
