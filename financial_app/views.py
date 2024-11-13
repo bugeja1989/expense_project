@@ -1,13 +1,9 @@
-import stripe
-from django.conf import settings
-from django.shortcuts import render, get_object_or_404, redirect
+# financial_app/views.py
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Sum
-from datetime import datetime
 from .models import Company, Client, Invoice, Expense
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @login_required
 def dashboard(request):
@@ -17,13 +13,11 @@ def dashboard(request):
         company=company, 
         status__in=['SENT', 'OVERDUE']
     ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-
-    current_month = datetime.now().month
     monthly_expenses = Expense.objects.filter(
-        company=company,
-        date__month=current_month
+        company=company, 
+        date__month=datetime.now().month
     ).aggregate(Sum('amount'))['amount__sum'] or 0
-
+    
     context = {
         'total_invoices': total_invoices,
         'pending_amount': pending_amount,
@@ -32,34 +26,28 @@ def dashboard(request):
     }
     return render(request, 'financial_app/dashboard.html', context)
 
-def create_subscription(request):
+@login_required
+def create_invoice(request):
     if request.method == 'POST':
-        user = request.user
-        try:
-            customer = stripe.Customer.create(email=user.email)
-            subscription = stripe.Subscription.create(
-                customer=customer.id,
-                items=[{"price": "your-stripe-price-id"}],
-            )
-            return redirect('dashboard')
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-    return render(request, 'financial_app/subscribe.html')
+        # handle invoice creation logic
+        pass
+    clients = Client.objects.filter(company__owner=request.user)
+    return render(request, 'financial_app/create_invoice.html', {'clients': clients})
+
+@login_required
+def client_list(request):
+    clients = Client.objects.filter(company__owner=request.user)
+    return render(request, 'financial_app/client_list.html', {'clients': clients})
+
+@login_required
+def expense_summary(request):
+    company = get_object_or_404(Company, owner=request.user)
+    expenses_by_category = Expense.objects.filter(company=company).values('category').annotate(total=Sum('amount'))
+    return JsonResponse({'expenses': list(expenses_by_category)})
 
 @login_required
 def upload_receipt(request):
-    if request.method == 'POST' and request.FILES['receipt']:
-        receipt_image = request.FILES['receipt']
-        expense = Expense.objects.create(
-            company=request.user.company,
-            category=request.POST['category'],
-            amount=request.POST['amount'],
-            date=request.POST['date'],
-            description=request.POST['description'],
-            receipt=receipt_image,
-        )
-        extracted_text = expense.extract_text_from_receipt()
-        expense.description += f"\\nExtracted text: {extracted_text}"
-        expense.save()
-        return redirect('dashboard')
+    if request.method == 'POST':
+        # handle receipt upload logic
+        pass
     return render(request, 'financial_app/upload_receipt.html')

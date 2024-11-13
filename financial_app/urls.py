@@ -1,8 +1,12 @@
+# financial_app/urls.py
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),  # Home/dashboard page
-    path('subscribe/', views.create_subscription, name='subscribe'),  # Subscription page
-    path('upload-receipt/', views.upload_receipt, name='upload_receipt'),  # Receipt upload page
+    path('invoices/create/', views.create_invoice, name='create_invoice'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('clients/', views.client_list, name='client_list'),
+    path('expenses/summary/', views.expense_summary, name='expense_summary'),
+    path('upload_receipt/', views.upload_receipt, name='upload_receipt'),
+    # Add more URL patterns as needed
 ]
