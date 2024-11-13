@@ -1,9 +1,11 @@
 # financial_app/views.py
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Sum
 from .models import Company, Client, Invoice, Expense
+from datetime import datetime
 
 @login_required
 def dashboard(request):
@@ -29,7 +31,7 @@ def dashboard(request):
 @login_required
 def create_invoice(request):
     if request.method == 'POST':
-        # handle invoice creation logic
+        # Handle invoice creation logic
         pass
     clients = Client.objects.filter(company__owner=request.user)
     return render(request, 'financial_app/create_invoice.html', {'clients': clients})
@@ -48,6 +50,16 @@ def expense_summary(request):
 @login_required
 def upload_receipt(request):
     if request.method == 'POST':
-        # handle receipt upload logic
+        # Handle receipt upload logic
         pass
     return render(request, 'financial_app/upload_receipt.html')
+
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'financial_app/signup.html', {'form': form})

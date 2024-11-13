@@ -8,5 +8,5 @@ urlpatterns = [
     path('clients/', views.client_list, name='client_list'),
     path('expenses/summary/', views.expense_summary, name='expense_summary'),
     path('upload_receipt/', views.upload_receipt, name='upload_receipt'),
-    # Add more URL patterns as needed
+    path('signup/', views.signup, name='signup'),  # Add signup URL pattern here
 ]

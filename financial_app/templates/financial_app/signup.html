@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sign Up - ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm mt-5">
+                <div class="card-header text-center" style="background-color: var(--soft-green); color: white;">
+                    <h4>Create an Account</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'signup' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                    </form>
+                </div>
+            </div>
+            <p class="text-center mt-3">Already have an account? <a href="{% url 'login' %}" class="text-success">Log In</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
