@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Clients - ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Clients</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Client Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Address</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td>{{ client.name }}</td>
+                <td>{{ client.email }}</td>
+                <td>{{ client.phone }}</td>
+                <td>{{ client.address }}</td>
+                <td>
+                    <a href="{% url 'edit_client' client.id %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{% url 'delete_client' client.id %}" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'add_client' %}" class="btn btn-success mt-3">Add New Client</a>
+</div>
+{% endblock %}

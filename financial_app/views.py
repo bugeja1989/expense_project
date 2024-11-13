@@ -68,3 +68,8 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'financial_app/signup.html', {'form': form})
+
+@login_required
+def client_list(request):
+    clients = Client.objects.filter(company__owner=request.user)
+    return render(request, 'financial_app/client_list.html', {'clients': clients})
