@@ -73,3 +73,17 @@ def signup(request):
 def client_list(request):
     clients = Client.objects.filter(company__owner=request.user)
     return render(request, 'financial_app/client_list.html', {'clients': clients})
+
+@login_required
+def add_client(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save(commit=False)
+            client.company = request.user.company  # Ensure client is linked to the user's company
+            client.save()
+            return redirect('client_list')  # Redirect back to the client list
+    else:
+        form = ClientForm()
+
+    return render(request, 'financial_app/add_client.html', {'form': form})
