@@ -1,17 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="description" content="Subscribe to ExpenseAlly for comprehensive expense tracking and financial management.">
-    <meta name="keywords" content="subscribe, ExpenseAlly, expense tracking, self-employed">
-    <title>Subscribe to ExpenseAlly</title>
-</head>
-<body>
-    <h1>Subscribe to ExpenseAlly</h1>
-    <p>Unlock full access to track your expenses effortlessly.</p>
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit">Subscribe for €30/month</button>
-    </form>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Subscribe - ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mt-5">
+    <div class="card-body text-center">
+        <h2>Subscribe to ExpenseAlly</h2>
+        <p>Unlock full access for €30/month.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-primary">Subscribe Now</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

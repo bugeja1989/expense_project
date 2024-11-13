@@ -1,34 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="description" content="Upload your receipts to ExpenseAlly and track expenses seamlessly.">
-    <meta name="keywords" content="upload receipt, expense tracking, ExpenseAlly">
-    <title>Upload Receipt - ExpenseAlly</title>
-</head>
-<body>
-    <h1>Upload Your Receipt</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <label for="category">Category:</label>
-        <select name="category">
-            <option value="UTILITIES">Utilities</option>
-            <option value="OFFICE">Office Supplies</option>
-        </select>
+{% extends 'base.html' %}
+{% block title %}Upload Receipt - ExpenseAlly{% endblock %}
 
-        <label for="amount">Amount:</label>
-        <input type="number" name="amount" step="0.01" required>
-
-        <label for="date">Date:</label>
-        <input type="date" name="date" required>
-
-        <label for="description">Description:</label>
-        <textarea name="description"></textarea>
-
-        <label for="receipt">Receipt:</label>
-        <input type="file" name="receipt" required>
-
-        <button type="submit">Upload Receipt</button>
-    </form>
-</body>
-</html>
+{% block content %}
+<div class="card shadow-sm mt-5">
+    <div class="card-body">
+        <h2 class="text-center">Upload Your Receipt</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="UTILITIES">Utilities</option>
+                    <option value="OFFICE">Office Supplies</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" name="amount" step="0.01" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" name="date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea name="description" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="receipt" class="form-label">Receipt</label>
+                <input type="file" name="receipt" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Upload Receipt</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
