@@ -3,9 +3,13 @@
 
 {% block content %}
 <div class="card shadow-sm mt-5">
+    <!-- Financial Analysis Hero Image -->
+    <img src="{% static 'images/subscription_financial_analysis.jpg' %}" alt="Financial Analysis" class="img-fluid rounded">
+
     <div class="card-body text-center">
         <h2>Subscribe to ExpenseAlly</h2>
         <p>Unlock full access for €30/month.</p>
+        <img src="{% static 'images/icon_exclusive_access.jpg' %}" alt="Exclusive Access Icon" class="img-fluid mb-3" style="max-width: 50px;">
         <form method="post">
             {% csrf_token %}
             <button class="btn btn-primary">Subscribe Now</button>
