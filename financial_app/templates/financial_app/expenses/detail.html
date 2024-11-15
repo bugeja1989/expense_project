@@ -1,0 +1,224 @@
+<!-- financial_app/templates/financial_app/expenses/detail.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}Expense Details | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">Expense Details</h1>
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold
+                        {% if expense.status == 'approved' %}bg-green-100 text-green-800
+                        {% elif expense.status == 'rejected' %}bg-red-100 text-red-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ expense.status|title }}
+                    </span>
+                </div>
+                <p class="mt-1 text-gray-500">Submitted by {{ expense.created_by.get_full_name }} on {{ expense.created_at|date:"F d, Y" }}</p>
+            </div>
+            <div class="flex space-x-2">
+                {% if expense.status == 'pending' and user.has_perm 'financial_app.approve_expense' %}
+                    <button onclick="approveExpense()" class="btn btn-success">
+                        <i class="fas fa-check mr-2"></i>Approve
+                    </button>
+                    <button onclick="rejectExpense()" class="btn btn-danger">
+                        <i class="fas fa-times mr-2"></i>Reject
+                    </button>
+                {% endif %}
+                <a href="{% url 'expense_edit' expense.id %}" class="btn btn-secondary">
+                    <i class="fas fa-edit mr-2"></i>Edit
+                </a>
+                <button onclick="deleteExpense()" class="btn btn-danger">
+                    <i class="fas fa-trash mr-2"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Details -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Main Details -->
+        <div class="col-span-2">
+            <div class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-semibold mb-4">Expense Information</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Category</label>
+                            <p class="mt-1">{{ expense.category.name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Amount</label>
+                            <p class="mt-1 text-xl font-semibold">${{ expense.amount }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Date</label>
+                            <p class="mt-1">{{ expense.date|date:"F d, Y" }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Payment Method</label>
+                            <p class="mt-1">{{ expense.get_payment_method_display }}</p>
+                        </div>
+                        {% if expense.vendor %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Vendor</label>
+                            <p class="mt-1">{{ expense.vendor }}</p>
+                        </div>
+                        {% endif %}
+                        {% if expense.reference_number %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Reference Number</label>
+                            <p class="mt-1">{{ expense.reference_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if expense.description %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                    <p class="text-gray-900">{{ expense.description }}</p>
+                </div>
+                {% endif %}
+
+                {% if expense.notes %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Notes</h3>
+                    <p class="text-gray-900">{{ expense.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="space-y-6">
+            <!-- Receipt -->
+            {% if expense.receipt %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Receipt</h2>
+                <div class="border rounded-lg overflow-hidden">
+                    {% if expense.receipt.url|lower|endswith:'.pdf' %}
+                        <embed src="{{ expense.receipt.url }}" type="application/pdf" width="100%" height="400px">
+                    {% else %}
+                        <img src="{{ expense.receipt.url }}" alt="Receipt" class="w-full">
+                    {% endif %}
+                </div>
+                <a href="{{ expense.receipt.url }}" download class="btn btn-secondary w-full mt-4">
+                    <i class="fas fa-download mr-2"></i>Download Receipt
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Approval Details -->
+            {% if expense.approved_by %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Approval Details</h2>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Approved By</label>
+                        <p class="mt-1">{{ expense.approved_by.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Approval Date</label>
+                        <p class="mt-1">{{ expense.approval_date|date:"F d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tags -->
+            {% if expense.tags %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Tags</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in expense.tags.split(',') %}
+                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm">
+                        {{ tag.strip }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Audit Trail -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-lg font-semibold mb-4">History</h2>
+        <div class="space-y-4">
+            {% for log in expense.history.all %}
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-history text-gray-600"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-900">{{ log.action_description }}</p>
+                    <p class="text-xs text-gray-500">
+                        {{ log.timestamp|date:"F d, Y H:i" }} by {{ log.user.get_full_name }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function approveExpense() {
+    if (confirm('Are you sure you want to approve this expense?')) {
+        fetch(`/api/expenses/{{ expense.id }}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+
+function rejectExpense() {
+    const reason = prompt('Please enter a reason for rejection:');
+    if (reason) {
+        fetch(`/api/expenses/{{ expense.id }}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+
+function deleteExpense() {
+    if (confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+        fetch(`/api/expenses/{{ expense.id }}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.href = "{% url 'expense_list' %}";
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,8 +1,8 @@
-<!-- financial_app/templates/financial_app/invoices/create.html -->
+<!-- financial_app/templates/financial_app/invoices/edit.html -->
 {% extends 'financial_app/base.html' %}
 {% load static %}
 
-{% block title %}Create Invoice | ExpenseAlly{% endblock %}
+{% block title %}Edit Invoice #{{ invoice.number }} | ExpenseAlly{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -11,14 +11,34 @@
         
         <!-- Header -->
         <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Create New Invoice</h1>
+            <h1 class="text-2xl font-bold">Edit Invoice #{{ invoice.number }}</h1>
             <div class="space-x-2">
-                <button type="submit" name="status" value="draft" class="btn btn-secondary">
-                    Save as Draft
+                <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Update Invoice
                 </button>
-                <button type="submit" name="status" value="sent" class="btn btn-primary">
-                    Create & Send
-                </button>
+            </div>
+        </div>
+
+        <!-- Status Change -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" class="mt-1 rounded-md border-gray-300">
+                        <option value="draft" {% if invoice.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="sent" {% if invoice.status == 'sent' %}selected{% endif %}>Sent</option>
+                        <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="overdue" {% if invoice.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                    </select>
+                </div>
+                {% if invoice.status == 'paid' %}
+                <div>
+                    <span class="text-sm text-gray-600">Paid on: {{ invoice.paid_date|date:"F d, Y" }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -29,18 +49,18 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Client</label>
-                        <select name="client" required 
-                                class="mt-1 block w-full rounded-md border-gray-300">
-                            <option value="">Select Client</option>
+                        <select name="client" required class="mt-1 block w-full rounded-md border-gray-300">
                             {% for client in clients %}
-                            <option value="{{ client.id }}">{{ client.name }}</option>
+                            <option value="{{ client.id }}" {% if client.id == invoice.client.id %}selected{% endif %}>
+                                {{ client.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Invoice Number</label>
-                        <input type="text" name="number" value="{{ next_invoice_number }}" 
-                               class="mt-1 block w-full rounded-md border-gray-300" required>
+                        <input type="text" name="number" value="{{ invoice.number }}" 
+                               class="mt-1 block w-full rounded-md border-gray-300" required readonly>
                     </div>
                 </div>
             </div>
@@ -50,12 +70,12 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Invoice Date</label>
-                        <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" 
+                        <input type="date" name="date" value="{{ invoice.date|date:'Y-m-d' }}" 
                                class="mt-1 block w-full rounded-md border-gray-300" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Due Date</label>
-                        <input type="date" name="due_date" 
+                        <input type="date" name="due_date" value="{{ invoice.due_date|date:'Y-m-d' }}" 
                                class="mt-1 block w-full rounded-md border-gray-300" required>
                     </div>
                 </div>
@@ -72,27 +92,32 @@
             </div>
             
             <div id="lineItems" class="space-y-4">
+                {% for item in invoice.items.all %}
                 <div class="line-item grid grid-cols-12 gap-4">
                     <div class="col-span-5">
                         <label class="block text-sm font-medium text-gray-700">Description</label>
-                        <input type="text" name="items[0][description]" 
+                        <input type="text" name="items[{{ forloop.counter0 }}][description]" 
+                               value="{{ item.description }}"
                                class="mt-1 block w-full rounded-md border-gray-300" required>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Quantity</label>
-                        <input type="number" name="items[0][quantity]" value="1" min="1" 
+                        <input type="number" name="items[{{ forloop.counter0 }}][quantity]" 
+                               value="{{ item.quantity }}" min="1" 
                                class="mt-1 block w-full rounded-md border-gray-300" 
                                onchange="calculateLineTotal(this)" required>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Rate</label>
-                        <input type="number" name="items[0][rate]" step="0.01" min="0" 
+                        <input type="number" name="items[{{ forloop.counter0 }}][rate]" 
+                               value="{{ item.rate }}" step="0.01" min="0" 
                                class="mt-1 block w-full rounded-md border-gray-300" 
                                onchange="calculateLineTotal(this)" required>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Amount</label>
-                        <input type="number" name="items[0][amount]" readonly 
+                        <input type="number" name="items[{{ forloop.counter0 }}][amount]" 
+                               value="{{ item.amount }}" readonly 
                                class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50">
                     </div>
                     <div class="col-span-1 flex items-end">
@@ -102,6 +127,7 @@
                         </button>
                     </div>
                 </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -110,21 +136,21 @@
             <div class="space-y-4 max-w-md ml-auto">
                 <div class="flex justify-between">
                     <span class="font-medium">Subtotal:</span>
-                    <span id="subtotal">$0.00</span>
+                    <span id="subtotal">${{ invoice.subtotal }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="font-medium">Tax Rate (%):</span>
-                    <input type="number" name="tax_rate" value="0" min="0" max="100" 
-                           class="w-24 rounded-md border-gray-300" 
+                    <input type="number" name="tax_rate" value="{{ invoice.tax_rate }}" 
+                           min="0" max="100" class="w-24 rounded-md border-gray-300" 
                            onchange="calculateTotals()">
                 </div>
                 <div class="flex justify-between">
                     <span class="font-medium">Tax Amount:</span>
-                    <span id="taxAmount">$0.00</span>
+                    <span id="taxAmount">${{ invoice.tax_amount }}</span>
                 </div>
                 <div class="flex justify-between text-lg font-bold">
                     <span>Total:</span>
-                    <span id="total">$0.00</span>
+                    <span id="total">${{ invoice.total }}</span>
                 </div>
             </div>
         </div>
@@ -135,7 +161,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700">Notes</label>
                 <textarea name="notes" rows="3" 
-                          class="mt-1 block w-full rounded-md border-gray-300"></textarea>
+                          class="mt-1 block w-full rounded-md border-gray-300">{{ invoice.notes }}</textarea>
             </div>
         </div>
     </form>
@@ -143,7 +169,8 @@
 
 {% block extra_js %}
 <script>
-let itemCount = 1;
+// Same JavaScript as create.html, initialized with current item count
+let itemCount = {{ invoice.items.count }};
 
 function addLineItem() {
     const template = document.querySelector('.line-item').cloneNode(true);

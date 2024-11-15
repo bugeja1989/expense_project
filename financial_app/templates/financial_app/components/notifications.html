@@ -1,0 +1,83 @@
+<!-- financial_app/templates/financial_app/components/notifications.html -->
+{% load static %}
+
+<div class="notifications-panel bg-white shadow-lg rounded-lg max-w-sm w-full" 
+     x-data="{ show: false }" 
+     @click.away="show = false">
+    
+    <!-- Header -->
+    <div class="px-4 py-3 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Notifications</h3>
+            <div class="flex space-x-2">
+                <button class="text-sm text-blue-600 hover:text-blue-800">
+                    Mark all as read
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="px-4 py-2 border-b border-gray-200">
+        <div class="flex space-x-2 text-sm">
+            <button class="px-2 py-1 rounded-full bg-blue-100 text-blue-800">All</button>
+            <button class="px-2 py-1 rounded-full hover:bg-gray-100">Unread</button>
+            <button class="px-2 py-1 rounded-full hover:bg-gray-100">Important</button>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="overflow-y-auto max-h-[400px]">
+        {% if notifications %}
+            {% for notification in notifications %}
+                <div class="px-4 py-3 hover:bg-gray-50 {% if not notification.read %}bg-blue-50{% endif %}">
+                    <div class="flex items-start">
+                        <!-- Icon -->
+                        <div class="flex-shrink-0 mt-1">
+                            <i class="fas fa-{{ notification.icon }} text-{{ notification.color }}-500"></i>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ notification.title }}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                {{ notification.message }}
+                            </p>
+                            <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                                <span>{{ notification.created_at|timesince }} ago</span>
+                                {% if notification.action_url %}
+                                    <a href="{{ notification.action_url }}" 
+                                       class="text-blue-600 hover:text-blue-800">
+                                        View
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="ml-3">
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="px-4 py-6 text-center text-gray-500">
+                <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                <p>No notifications</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="px-4 py-3 border-t border-gray-200 text-center">
+        <a href="{% url 'all_notifications' %}" 
+           class="text-sm text-blue-600 hover:text-blue-800">
+            View all notifications
+        </a>
+    </div>
+</div>

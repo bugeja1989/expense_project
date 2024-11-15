@@ -1,0 +1,130 @@
+<!-- templates/preferences.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Account Preferences | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-2xl font-semibold mb-6 text-center">Account Preferences</h2>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="bg-green-100 text-green-700 p-4 rounded mb-4">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if form.errors %}
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <!-- Personal Information -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}"
+                               class="mt-1 block w-full rounded-md border-gray-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}"
+                               class="mt-1 block w-full rounded-md border-gray-300">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Information -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" name="email" value="{{ user.email }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Change Password</label>
+                        <input type="password" name="password1"
+                               class="mt-1 block w-full rounded-md border-gray-300"
+                               placeholder="New password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                        <input type="password" name="password2"
+                               class="mt-1 block w-full rounded-md border-gray-300"
+                               placeholder="Confirm new password">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="notify_email"
+                               {% if user.profile.notify_email %}checked{% endif %}
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">
+                            Receive email notifications
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="notify_sms"
+                               {% if user.profile.notify_sms %}checked{% endif %}
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">
+                            Receive SMS notifications
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Settings -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="public_profile"
+                               {% if user.profile.public_profile %}checked{% endif %}
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">
+                            Make my profile public
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="data_sharing"
+                               {% if user.profile.data_sharing %}checked{% endif %}
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">
+                            Allow data sharing with third parties
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

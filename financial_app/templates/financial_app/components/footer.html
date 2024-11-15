@@ -1,0 +1,61 @@
+<!-- financial_app/templates/financial_app/components/footer.html -->
+{% load static %}
+
+<footer class="bg-gray-800 text-white pt-10 pb-4">
+    <div class="container mx-auto px-4">
+        <!-- Footer Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <!-- Company Info -->
+            <div>
+                <h3 class="text-xl font-bold mb-4">ExpenseAlly</h3>
+                <p class="text-gray-400">
+                    Simplifying expense management for businesses and individuals.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'dashboard' %}" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                    <li><a href="{% url 'expense_list' %}" class="text-gray-400 hover:text-white">Expenses</a></li>
+                    <li><a href="{% url 'reports' %}" class="text-gray-400 hover:text-white">Reports</a></li>
+                    <li><a href="{% url 'help' %}" class="text-gray-400 hover:text-white">Help Center</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Contact Us</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li>Email: support@expenseally.com</li>
+                    <li>Phone: +1 (555) 123-4567</li>
+                    <li>Address: 123 Finance Street</li>
+                </ul>
+            </div>
+
+            <!-- Social Links -->
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="border-t border-gray-700 pt-4 mt-4">
+            <div class="text-center text-gray-400">
+                <p>&copy; {% now "Y" %} ExpenseAlly. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>

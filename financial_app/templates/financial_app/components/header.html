@@ -1,0 +1,63 @@
+<!-- financial_app/templates/financial_app/components/header.html -->
+{% load static %}
+
+<header class="bg-white shadow-sm">
+    <nav class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{% url 'dashboard' %}" class="text-xl font-bold text-gray-800">
+                    ExpenseAlly
+                </a>
+            </div>
+
+            <!-- Navigation -->
+            <div class="hidden md:flex space-x-4">
+                <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                <a href="{% url 'expense_list' %}" class="nav-link">Expenses</a>
+                <a href="{% url 'invoice_list' %}" class="nav-link">Invoices</a>
+                <a href="{% url 'report_list' %}" class="nav-link">Reports</a>
+            </div>
+
+            <!-- User Menu -->
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <button class="p-2 hover:bg-gray-100 rounded-full">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications %}
+                            <span class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">
+                                {{ unread_notifications }}
+                            </span>
+                        {% endif %}
+                    </button>
+                </div>
+
+                <!-- Profile Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center space-x-2">
+                        <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+                             alt="{{ user.username }}"
+                             class="w-8 h-8 rounded-full">
+                        <span class="hidden md:inline">{{ user.get_full_name|default:user.username }}</span>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div x-show="open" 
+                         @click.away="open = false"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                        <a href="{% url 'user_profile' %}" class="block px-4 py-2 hover:bg-gray-100">Profile</a>
+                        <a href="{% url 'user_settings' %}" class="block px-4 py-2 hover:bg-gray-100">Settings</a>
+                        <hr class="my-1">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="block w-full text-left px-4 py-2 hover:bg-gray-100">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>

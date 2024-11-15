@@ -1,0 +1,218 @@
+<!-- financial_app/templates/financial_app/expenses/edit.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}Edit Expense | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <form method="POST" enctype="multipart/form-data" id="expenseForm" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Header & Status Section - From Previous Part -->
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Basic Information -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Payment Method</label>
+                        <select name="payment_method" class="mt-1 block w-full rounded-md border-gray-300">
+                            <option value="CASH" {% if expense.payment_method == 'CASH' %}selected{% endif %}>Cash</option>
+                            <option value="BANK_TRANSFER" {% if expense.payment_method == 'BANK_TRANSFER' %}selected{% endif %}>Bank Transfer</option>
+                            <option value="CREDIT_CARD" {% if expense.payment_method == 'CREDIT_CARD' %}selected{% endif %}>Credit Card</option>
+                            <option value="DEBIT_CARD" {% if expense.payment_method == 'DEBIT_CARD' %}selected{% endif %}>Debit Card</option>
+                            <option value="CHECK" {% if expense.payment_method == 'CHECK' %}selected{% endif %}>Check</option>
+                            <option value="OTHER" {% if expense.payment_method == 'OTHER' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Details -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Additional Details</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Vendor</label>
+                        <input type="text" name="vendor" value="{{ expense.vendor }}"
+                               class="mt-1 block w-full rounded-md border-gray-300"
+                               placeholder="Vendor name">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Reference Number</label>
+                        <input type="text" name="reference_number" value="{{ expense.reference_number }}"
+                               class="mt-1 block w-full rounded-md border-gray-300"
+                               placeholder="Invoice or receipt number">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tags</label>
+                        <input type="text" name="tags" value="{{ expense.tags }}"
+                               class="mt-1 block w-full rounded-md border-gray-300"
+                               placeholder="Comma separated tags">
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" name="tax_deductible" id="tax_deductible"
+                               {% if expense.tax_deductible %}checked{% endif %}
+                               class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                        <label for="tax_deductible" class="ml-2 block text-sm text-gray-700">
+                            Tax Deductible
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description and Notes -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description *</label>
+                    <textarea name="description" required rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300"
+                              placeholder="Describe the expense">{{ expense.description }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                    <textarea name="notes" rows="2"
+                              class="mt-1 block w-full rounded-md border-gray-300"
+                              placeholder="Additional notes">{{ expense.notes }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Upload -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Receipt</h2>
+            <div class="space-y-4">
+                {% if expense.receipt %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Current Receipt</h3>
+                    {% if expense.receipt.url|lower|endswith:'.pdf' %}
+                        <embed src="{{ expense.receipt.url }}" type="application/pdf" 
+                               width="100%" height="200px" class="mb-2">
+                    {% else %}
+                        <img src="{{ expense.receipt.url }}" alt="Current receipt" 
+                             class="max-h-48 mb-2">
+                    {% endif %}
+                    <div class="flex items-center space-x-2">
+                        <a href="{{ expense.receipt.url }}" target="_blank" 
+                           class="text-blue-600 hover:text-blue-800">
+                            View Full Size
+                        </a>
+                        <button type="button" onclick="removeReceipt()" 
+                                class="text-red-600 hover:text-red-800">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="flex items-center justify-center w-full">
+                    <label class="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg 
+                                border-2 border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                            <p class="mb-2 text-sm text-gray-500">
+                                <span class="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                Image or PDF (MAX. 5MB)
+                            </p>
+                        </div>
+                        <input type="file" name="receipt" class="hidden" accept="image/*,.pdf">
+                    </label>
+                </div>
+                <div id="preview" class="hidden">
+                    <img id="receipt-preview" class="max-h-48 mx-auto" alt="Receipt preview">
+                </div>
+            </div>
+        </div>
+
+        <!-- Recurring Expense -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Recurring Expense</h2>
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_recurring" id="is_recurring"
+                           {% if expense.is_recurring %}checked{% endif %}
+                           class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                    <label for="is_recurring" class="ml-2 block text-sm text-gray-700">
+                        Make this a recurring expense
+                    </label>
+                </div>
+            </div>
+            <div id="recurring-options" class="space-y-4 {% if not expense.is_recurring %}hidden{% endif %}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Frequency</label>
+                    <select name="recurring_frequency" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="DAILY" {% if expense.recurring_frequency == 'DAILY' %}selected{% endif %}>Daily</option>
+                        <option value="WEEKLY" {% if expense.recurring_frequency == 'WEEKLY' %}selected{% endif %}>Weekly</option>
+                        <option value="MONTHLY" {% if expense.recurring_frequency == 'MONTHLY' %}selected{% endif %}>Monthly</option>
+                        <option value="QUARTERLY" {% if expense.recurring_frequency == 'QUARTERLY' %}selected{% endif %}>Quarterly</option>
+                        <option value="YEARLY" {% if expense.recurring_frequency == 'YEARLY' %}selected{% endif %}>Yearly</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+// File upload preview
+document.querySelector('input[name="receipt"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('receipt-preview').src = e.target.result;
+                document.getElementById('preview').classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        } else {
+            document.getElementById('preview').classList.add('hidden');
+        }
+    }
+});
+
+// Recurring expense toggle
+document.getElementById('is_recurring').addEventListener('change', function(e) {
+    const recurringOptions = document.getElementById('recurring-options');
+    recurringOptions.classList.toggle('hidden', !e.target.checked);
+});
+
+// Remove receipt
+function removeReceipt() {
+    if (confirm('Are you sure you want to remove the current receipt?')) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remove_receipt';
+        input.value = 'true';
+        document.getElementById('expenseForm').appendChild(input);
+    }
+}
+
+// Form validation
+document.getElementById('expenseForm').addEventListener('submit', function(e) {
+    const amount = document.querySelector('input[name="amount"]').value;
+    if (amount <= 0) {
+        e.preventDefault();
+        alert('Amount must be greater than 0');
+    }
+    
+    const receipt = document.querySelector('input[name="receipt"]').files[0];
+    if (receipt && receipt.size > 5 * 1024 * 1024) {
+        e.preventDefault();
+        alert('Receipt file size must not exceed 5MB');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

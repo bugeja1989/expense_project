@@ -1,0 +1,96 @@
+{# File: financial_app/templates/financial_app/dashboard/components/recent_transactions.html #}
+{% load humanize %}
+
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-medium text-gray-900">Recent Transactions</h3>
+        <div class="flex space-x-2">
+            <button data-type="all" class="transaction-filter px-3 py-1 text-sm rounded-full bg-indigo-100 text-indigo-700">All</button>
+            <button data-type="income" class="transaction-filter px-3 py-1 text-sm rounded-full text-gray-500 hover:bg-green-100 hover:text-green-700">Income</button>
+            <button data-type="expense" class="transaction-filter px-3 py-1 text-sm rounded-full text-gray-500 hover:bg-red-100 hover:text-red-700">Expenses</button>
+        </div>
+    </div>
+
+    <div class="overflow-hidden">
+        <ul class="divide-y divide-gray-200" id="transactions-list">
+            {% for transaction in recent_transactions %}
+            <li class="py-4 transaction-item" data-type="{{ transaction.type }}">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        {% if transaction.type == 'income' %}
+                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                </svg>
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-100">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                            {{ transaction.description }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            {{ transaction.date|date:"M d, Y" }} • 
+                            {% if transaction.type == 'income' %}
+                                Invoice #{{ transaction.reference }}
+                            {% else %}
+                                {{ transaction.category }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0 text-sm font-medium {% if transaction.type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                        {% if transaction.type == 'income' %}+{% else %}-{% endif %}€{{ transaction.amount|floatformat:2|intcomma }}
+                    </div>
+                </div>
+            </li>
+            {% empty %}
+            <li class="py-4 text-center text-gray-500">
+                No recent transactions found
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if recent_transactions %}
+    <div class="mt-6 text-center">
+        <a href="{% url 'transactions_list' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            View all transactions →
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.transaction-filter');
+    const transactionItems = document.querySelectorAll('.transaction-item');
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update button styles
+            filterButtons.forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                btn.classList.add('text-gray-500');
+            });
+            this.classList.add('bg-indigo-100', 'text-indigo-700');
+            this.classList.remove('text-gray-500');
+
+            // Filter transactions
+            const filterType = this.dataset.type;
+            transactionItems.forEach(item => {
+                if (filterType === 'all' || item.dataset.type === filterType) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>

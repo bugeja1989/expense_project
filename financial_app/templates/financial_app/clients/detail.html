@@ -1,0 +1,199 @@
+<!-- financial_app/templates/financial_app/clients/detail.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ client.name }} | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Client Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">{{ client.name }}</h1>
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold
+                        {% if client.is_active %}bg-green-100 text-green-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ client.get_status_display }}
+                    </span>
+                </div>
+                <p class="mt-1 text-gray-500">Client since {{ client.created_at|date:"F Y" }}</p>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'invoice_create' %}?client={{ client.id }}" class="btn btn-secondary">
+                    <i class="fas fa-file-invoice mr-2"></i>New Invoice
+                </a>
+                <a href="{% url 'client_edit' client.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit mr-2"></i>Edit Client
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Total Invoiced</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ client.total_invoiced }}</p>
+            <p class="mt-1 text-sm text-gray-500">Across {{ client.total_invoices }} invoices</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Outstanding Balance</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ client.outstanding_balance }}</p>
+            <p class="mt-1 text-sm text-gray-500">{{ client.overdue_invoices }} overdue</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Average Payment Time</h3>
+            <p class="mt-2 text-3xl font-semibold">{{ client.avg_payment_days }} days</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Last Payment</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ client.last_payment_amount }}</p>
+            <p class="mt-1 text-sm text-gray-500">{{ client.last_payment_date|date:"M d, Y" }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Contact Information -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Contact Information</h2>
+                <div class="space-y-4">
+                    {% if client.email %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Email</label>
+                        <p class="mt-1">
+                            <a href="mailto:{{ client.email }}" class="text-blue-600 hover:text-blue-800">
+                                {{ client.email }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if client.phone %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Phone</label>
+                        <p class="mt-1">
+                            <a href="tel:{{ client.phone }}" class="text-blue-600 hover:text-blue-800">
+                                {{ client.phone }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if client.address %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Address</label>
+                        <p class="mt-1">{{ client.address }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if client.website %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Website</label>
+                        <p class="mt-1">
+                            <a href="{{ client.website }}" target="_blank" 
+                               class="text-blue-600 hover:text-blue-800">
+                                {{ client.website }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if client.notes %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Notes</h2>
+                <p class="text-gray-700 whitespace-pre-line">{{ client.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Invoices and Activity -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Recent Invoices -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Recent Invoices</h2>
+                    <a href="{% url 'invoice_list' %}?client={{ client.id }}" 
+                       class="text-sm text-blue-600 hover:text-blue-800">
+                        View All
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-3">Invoice #</th>
+                                <th class="text-left py-3">Date</th>
+                                <th class="text-right py-3">Amount</th>
+                                <th class="text-left py-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr class="border-b">
+                                <td class="py-3">
+                                    <a href="{% url 'invoice_detail' invoice.id %}" 
+                                       class="text-blue-600 hover:text-blue-800">
+                                        {{ invoice.number }}
+                                    </a>
+                                </td>
+                                <td class="py-3">{{ invoice.date|date:"M d, Y" }}</td>
+                                <td class="py-3 text-right">${{ invoice.amount }}</td>
+                                <td class="py-3">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        {% if invoice.status == 'paid' %}bg-green-100 text-green-800
+                                        {% elif invoice.status == 'overdue' %}bg-red-100 text-red-800
+                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-gray-500">
+                                    No invoices found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activity History -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold mb-4">Activity History</h2>
+                <div class="space-y-4">
+                    {% for activity in activities %}
+                    <div class="flex space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-{{ activity.icon }} text-gray-600"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ activity.timestamp|date:"F d, Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-gray-500">No activity recorded</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Add any client-specific JavaScript functionality here
+</script>
+{% endblock %}
+{% endblock %}

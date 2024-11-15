@@ -1,0 +1,85 @@
+<!-- financial_app/templates/financial_app/components/sidebar.html -->
+{% load static %}
+
+<div class="sidebar bg-gray-800 text-white w-64 min-h-screen flex flex-col transition-all duration-300"
+     x-data="{ expanded: true }">
+    <!-- Sidebar Header -->
+    <div class="p-4 border-b border-gray-700">
+        <div class="flex items-center justify-between">
+            <a href="{% url 'dashboard' %}" class="text-xl font-bold">
+                {% if expanded %}
+                    ExpenseAlly
+                {% else %}
+                    EA
+                {% endif %}
+            </a>
+            <button @click="expanded = !expanded" class="text-gray-400 hover:text-white">
+                <i class="fas" :class="expanded ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 py-4">
+        <ul class="space-y-2">
+            <!-- Dashboard -->
+            <li>
+                <a href="{% url 'dashboard' %}" 
+                   class="flex items-center px-4 py-2 {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-700{% endif %} hover:bg-gray-700">
+                    <i class="fas fa-home w-6"></i>
+                    <span x-show="expanded">Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Expenses -->
+            <li>
+                <a href="{% url 'expense_list' %}"
+                   class="flex items-center px-4 py-2 {% if 'expense' in request.resolver_match.url_name %}bg-gray-700{% endif %} hover:bg-gray-700">
+                    <i class="fas fa-receipt w-6"></i>
+                    <span x-show="expanded">Expenses</span>
+                </a>
+            </li>
+
+            <!-- Invoices -->
+            <li>
+                <a href="{% url 'invoice_list' %}"
+                   class="flex items-center px-4 py-2 {% if 'invoice' in request.resolver_match.url_name %}bg-gray-700{% endif %} hover:bg-gray-700">
+                    <i class="fas fa-file-invoice w-6"></i>
+                    <span x-show="expanded">Invoices</span>
+                </a>
+            </li>
+
+            <!-- Reports -->
+            <li>
+                <a href="{% url 'reports' %}"
+                   class="flex items-center px-4 py-2 {% if 'report' in request.resolver_match.url_name %}bg-gray-700{% endif %} hover:bg-gray-700">
+                    <i class="fas fa-chart-bar w-6"></i>
+                    <span x-show="expanded">Reports</span>
+                </a>
+            </li>
+
+            <!-- Settings -->
+            <li>
+                <a href="{% url 'settings' %}"
+                   class="flex items-center px-4 py-2 {% if 'settings' in request.resolver_match.url_name %}bg-gray-700{% endif %} hover:bg-gray-700">
+                    <i class="fas fa-cog w-6"></i>
+                    <span x-show="expanded">Settings</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Quick Stats -->
+    <div class="p-4 border-t border-gray-700" x-show="expanded">
+        <div class="space-y-4">
+            <div>
+                <h4 class="text-sm text-gray-400">Monthly Expenses</h4>
+                <p class="text-lg font-semibold">${{ monthly_expenses|default:"0.00" }}</p>
+            </div>
+            <div>
+                <h4 class="text-sm text-gray-400">Budget Remaining</h4>
+                <p class="text-lg font-semibold">${{ budget_remaining|default:"0.00" }}</p>
+            </div>
+        </div>
+    </div>
+</div>

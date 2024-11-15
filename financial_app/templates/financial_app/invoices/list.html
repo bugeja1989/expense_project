@@ -1,602 +1,123 @@
+<!-- financial_app/templates/financial_app/invoices/list.html -->
 {% extends 'financial_app/base.html' %}
-{% load humanize %}
+{% load static %}
+
+{% block title %}Invoices | ExpenseAlly{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Header with Actions -->
-    <div class="col-12 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="h3">Invoices</h1>
-            <div class="btn-group">
-                <a href="{% url 'invoice_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Invoice
-                </a>
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                    <i class="fas fa-filter"></i> Filter
-                </button>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?export=csv">CSV</a></li>
-                        <li><a class="dropdown-item" href="?export=xlsx">Excel</a></li>
-                        <li><a class="dropdown-item" href="?export=pdf">PDF</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Invoices</h1>
+        <a href="{% url 'invoice_create' %}" 
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>New Invoice
+        </a>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="col-md-3">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="text-muted">Total Outstanding</h6>
-                <h3>€{{ stats.total_outstanding|floatformat:2|intcomma }}</h3>
-                <div class="mt-2 text-danger">
-                    {{ stats.overdue_count }} overdue
-                </div>
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" class="mt-1 block w-full rounded-md border-gray-300">
+                    <option value="">All Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                </select>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="text-muted">This Month</h6>
-                <h3>€{{ stats.month_total|floatformat:2|intcomma }}</h3>
-                <div class="mt-2">
-                    {{ stats.month_count }} invoices
-                </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Date Range</label>
+                <input type="date" name="date_from" class="mt-1 block w-full rounded-md border-gray-300">
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="text-muted">Average Value</h6>
-                <h3>€{{ stats.average_value|floatformat:2|intcomma }}</h3>
-                <div class="mt-2">
-                    Last 30 days
-                </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">To</label>
+                <input type="date" name="date_to" class="mt-1 block w-full rounded-md border-gray-300">
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="text-muted">Collection Rate</h6>
-                <h3>{{ stats.collection_rate|floatformat:1 }}%</h3>
-                <div class="mt-2">
-                    {{ stats.paid_count }} paid of {{ stats.total_count }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Invoice Table -->
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                {% if invoices %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <input type="checkbox" class="form-check-input select-all">
-                                </th>
-                                <th>Number</th>
-                                <th>Client</th>
-                                <th>Issue Date</th>
-                                <th>Due Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for invoice in invoices %}
-                            <tr>
-                                <td>
-                                    <input type="checkbox" class="form-check-input select-item" 
-                                           value="{{ invoice.id }}">
-                                </td>
-                                <td>
-                                    <a href="{% url 'invoice_detail' invoice.id %}">
-                                        {{ invoice.invoice_number }}
-                                    </a>
-                                </td>
-                                <td>{{ invoice.client.name }}</td>
-                                <td>{{ invoice.issue_date|date:"Y-m-d" }}</td>
-                                <td>
-                                    {% if invoice.is_overdue %}
-                                        <span class="text-danger">
-                                            {{ invoice.due_date|date:"Y-m-d" }}
-                                        </span>
-                                    {% else %}
-                                        {{ invoice.due_date|date:"Y-m-d" }}
-                                    {% endif %}
-                                </td>
-                                <td>€{{ invoice.total_amount|floatformat:2|intcomma }}</td>
-                                <td>
-                                    <span class="badge bg-{{ invoice.get_status_color }}">
-                                        {{ invoice.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-light dropdown-toggle"
-                                                data-bs-toggle="dropdown">
-                                            Actions
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'invoice_detail' invoice.id %}">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                            </li>
-                                            {% if invoice.can_edit %}
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'invoice_edit' invoice.id %}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'invoice_pdf' invoice.id %}">
-                                                    <i class="fas fa-file-pdf"></i> Download PDF
-                                                </a>
-                                            </li>
-                                            {% if invoice.can_send %}
-                                            <li>
-                                                <a class="dropdown-item send-invoice" href="#" 
-                                                   data-invoice-id="{{ invoice.id }}">
-                                                    <i class="fas fa-paper-plane"></i> Send to Client
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            {% if invoice.can_mark_paid %}
-                                            <li>
-                                                <a class="dropdown-item record-payment" href="#"
-                                                   data-invoice-id="{{ invoice.id }}"
-                                                   data-amount="{{ invoice.get_balance_due }}">
-                                                    <i class="fas fa-check"></i> Record Payment
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            <li><hr class="dropdown-divider"></li>
-                                            {% if invoice.can_void %}
-                                            <li>
-                                                <a class="dropdown-item text-danger void-invoice" href="#"
-                                                   data-invoice-id="{{ invoice.id }}">
-                                                    <i class="fas fa-ban"></i> Void Invoice
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                {% if is_paginated %}
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1">&laquo; First</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-                        </li>
-                        {% endif %}
-
-                        <li class="page-item disabled">
-                            <span class="page-link">
-                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                            </span>
-                        </li>
-
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-                    <h4>No Invoices Found</h4>
-                    <p class="text-muted">Create your first invoice to get started</p>
-                    <a href="{% url 'invoice_create' %}" class="btn btn-primary mt-2">
-                        Create Invoice
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Filter Invoices</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="filterForm" method="get">
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="">All</option>
-                            {% for value, label in status_choices %}
-                            <option value="{{ value }}" 
-                                    {% if value == request.GET.status %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Client</label>
-                        <select name="client" class="form-select">
-                            <option value="">All Clients</option>
-                            {% for client in clients %}
-                            <option value="{{ client.id }}"
-                                    {% if client.id|stringformat:"s" == request.GET.client %}selected{% endif %}>
-                                {{ client.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">From Date</label>
-                                <input type="date" name="date_from" class="form-control"
-                                       value="{{ request.GET.date_from }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">To Date</label>
-                                <input type="date" name="date_to" class="form-control"
-                                       value="{{ request.GET.date_to }}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Min Amount</label>
-                                <input type="number" name="min_amount" class="form-control" step="0.01"
-                                       value="{{ request.GET.min_amount }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Max Amount</label>
-                                <input type="number" name="max_amount" class="form-control" step="0.01"
-                                       value="{{ request.GET.max_amount }}">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="document.getElementById('filterForm').submit()">
-                    Apply Filters
+            <div class="flex items-end">
+                <button type="submit" class="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">
+                    <i class="fas fa-filter mr-2"></i>Apply Filters
                 </button>
             </div>
-        </div>
+        </form>
     </div>
-</div>
 
-<!-- Send Invoice Modal -->
-<div class="modal fade" id="sendInvoiceModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Send Invoice</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="sendInvoiceForm">
-                    <div class="mb-3">
-                        <label class="form-label">Email Subject</label>
-                        <input type="text" class="form-control" name="subject" id="emailSubject">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Message</label>
-                        <textarea class="form-control" name="message" rows="4" id="emailMessage"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="attach_pdf" 
-                                   id="attachPdf" checked>
-                            <label class="form-check-label">Attach PDF</label>
+    <!-- Invoice List -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Invoice #
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Client
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for invoice in invoices %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="{% url 'invoice_detail' invoice.id %}" class="text-blue-600 hover:text-blue-900">
+                            {{ invoice.number }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {{ invoice.client.name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${{ invoice.amount }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {{ invoice.date|date:"M d, Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                            {% if invoice.status == 'paid' %}bg-green-100 text-green-800
+                            {% elif invoice.status == 'overdue' %}bg-red-100 text-red-800
+                            {% elif invoice.status == 'sent' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ invoice.status|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <a href="{% url 'invoice_edit' invoice.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'invoice_delete' invoice.id %}" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </a>
                         </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="sendInvoiceBtn">Send</button>
-            </div>
-        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        No invoices found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+
+    <!-- Pagination -->
+    {% include 'financial_app/components/pagination.html' %}
 </div>
-
-<div class="modal fade" id="recordPaymentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Record Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="recordPaymentForm">
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" class="form-control" name="amount" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Payment Date</label>
-                        <input type="date" class="form-control" name="payment_date" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <select class="form-select" name="payment_method" required>
-                            <option value="BANK_TRANSFER">Bank Transfer</option>
-                            <option value="CREDIT_CARD">Credit Card</option>
-                            <option value="CASH">Cash</option>
-                            <option value="CHECK">Check</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reference Number</label>
-                        <input type="text" class="form-control" name="reference_number">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" name="notes" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="savePaymentBtn">Record Payment</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Void Invoice Modal -->
-<div class="modal fade" id="voidInvoiceModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Void Invoice</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    This action cannot be undone.
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Reason for Voiding</label>
-                    <textarea class="form-control" id="voidReason" rows="3" required></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmVoidBtn">Void Invoice</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Bulk Actions Modal -->
-<div class="modal fade" id="bulkActionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bulk Actions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="bulkActionForm">
-                    <div class="mb-3">
-                        <label class="form-label">Action</label>
-                        <select class="form-select" name="action" required>
-                            <option value="">Select action...</option>
-                            <option value="send">Send to Clients</option>
-                            <option value="mark_sent">Mark as Sent</option>
-                            <option value="mark_paid">Mark as Paid</option>
-                            <option value="delete">Delete</option>
-                        </select>
-                    </div>
-                    <input type="hidden" name="invoice_ids" id="selectedInvoices">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmBulkAction">Apply</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% block extra_js %}
-<script>
-$(document).ready(function() {
-    // Initialize date inputs with current date
-    const today = new Date().toISOString().split('T')[0];
-    $('input[name="payment_date"]').val(today);
-
-    // Handle send invoice
-    $('.send-invoice').click(function(e) {
-        e.preventDefault();
-        const invoiceId = $(this).data('invoice-id');
-        $('#sendInvoiceForm').data('invoice-id', invoiceId);
-        $('#sendInvoiceModal').modal('show');
-    });
-
-    $('#sendInvoiceBtn').click(function() {
-        const invoiceId = $('#sendInvoiceForm').data('invoice-id');
-        const formData = new FormData($('#sendInvoiceForm')[0]);
-        
-        $.ajax({
-            url: `/api/invoices/${invoiceId}/send/`,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                $('#sendInvoiceModal').modal('hide');
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('Error sending invoice: ' + xhr.responseText);
-            }
-        });
-    });
-
-    // Handle record payment
-    $('.record-payment').click(function(e) {
-        e.preventDefault();
-        const invoiceId = $(this).data('invoice-id');
-        const amount = $(this).data('amount');
-        
-        $('#recordPaymentForm').data('invoice-id', invoiceId);
-        $('input[name="amount"]').val(amount);
-        $('#recordPaymentModal').modal('show');
-    });
-
-    $('#savePaymentBtn').click(function() {
-        const invoiceId = $('#recordPaymentForm').data('invoice-id');
-        const formData = new FormData($('#recordPaymentForm')[0]);
-        
-        $.ajax({
-            url: `/api/invoices/${invoiceId}/record-payment/`,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                $('#recordPaymentModal').modal('hide');
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('Error recording payment: ' + xhr.responseText);
-            }
-        });
-    });
-
-    // Handle void invoice
-    $('.void-invoice').click(function(e) {
-        e.preventDefault();
-        const invoiceId = $(this).data('invoice-id');
-        $('#confirmVoidBtn').data('invoice-id', invoiceId);
-        $('#voidInvoiceModal').modal('show');
-    });
-
-    $('#confirmVoidBtn').click(function() {
-        const invoiceId = $(this).data('invoice-id');
-        const reason = $('#voidReason').val();
-        
-        if (!reason) {
-            alert('Please provide a reason for voiding the invoice');
-            return;
-        }
-        
-        $.ajax({
-            url: `/api/invoices/${invoiceId}/void/`,
-            method: 'POST',
-            data: { reason: reason },
-            success: function(response) {
-                $('#voidInvoiceModal').modal('hide');
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('Error voiding invoice: ' + xhr.responseText);
-            }
-        });
-    });
-
-    // Handle bulk actions
-    $('.select-all').change(function() {
-        $('.select-item').prop('checked', $(this).is(':checked'));
-        updateBulkActionButton();
-    });
-
-    $('.select-item').change(function() {
-        updateBulkActionButton();
-    });
-
-    function updateBulkActionButton() {
-        const selectedCount = $('.select-item:checked').length;
-        if (selectedCount > 0) {
-            $('#bulkActionBtn')
-                .removeClass('d-none')
-                .text(`Bulk Actions (${selectedCount})`);
-        } else {
-            $('#bulkActionBtn').addClass('d-none');
-        }
-    }
-
-    $('#bulkActionBtn').click(function() {
-        const selectedIds = $('.select-item:checked')
-            .map(function() { return $(this).val(); })
-            .get();
-        $('#selectedInvoices').val(selectedIds.join(','));
-        $('#bulkActionModal').modal('show');
-    });
-
-    $('#confirmBulkAction').click(function() {
-        const action = $('#bulkActionForm select[name="action"]').val();
-        const invoiceIds = $('#selectedInvoices').val();
-        
-        if (!action) {
-            alert('Please select an action');
-            return;
-        }
-        
-        $.ajax({
-            url: '/api/invoices/bulk-action/',
-            method: 'POST',
-            data: {
-                action: action,
-                invoice_ids: invoiceIds
-            },
-            success: function(response) {
-                $('#bulkActionModal').modal('hide');
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('Error performing bulk action: ' + xhr.responseText);
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

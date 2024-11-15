@@ -1,0 +1,244 @@
+<!-- financial_app/templates/financial_app/reports/overview.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}Reports Overview | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Financial Reports</h1>
+        <div class="flex space-x-2">
+            <button onclick="exportData('pdf')" class="btn btn-secondary">
+                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </button>
+            <button onclick="exportData('csv')" class="btn btn-secondary">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <form id="reportFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Date Range</label>
+                <select name="date_range" class="mt-1 block w-full rounded-md border-gray-300">
+                    <option value="this_month">This Month</option>
+                    <option value="last_month">Last Month</option>
+                    <option value="this_quarter">This Quarter</option>
+                    <option value="last_quarter">Last Quarter</option>
+                    <option value="this_year">This Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="custom-date-range hidden">
+                <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="date" name="start_date" 
+                       class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+            <div class="custom-date-range hidden">
+                <label class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="date" name="end_date"
+                       class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-sync-alt mr-2"></i>Update Reports
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Total Revenue</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ total_revenue }}</p>
+            <p class="mt-1 text-sm {% if revenue_change >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ revenue_change }}% vs previous period
+            </p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Total Expenses</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ total_expenses }}</p>
+            <p class="mt-1 text-sm {% if expense_change <= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ expense_change }}% vs previous period
+            </p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Net Income</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ net_income }}</p>
+            <p class="mt-1 text-sm {% if net_income_change >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ net_income_change }}% vs previous period
+            </p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-sm font-medium text-gray-500">Cash Flow</h3>
+            <p class="mt-2 text-3xl font-semibold">${{ cash_flow }}</p>
+            <p class="mt-1 text-sm {% if cash_flow_change >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ cash_flow_change }}% vs previous period
+            </p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Revenue vs Expenses -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Revenue vs Expenses</h2>
+            <canvas id="revenueExpensesChart"></canvas>
+        </div>
+
+        <!-- Expense Categories -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Expense Distribution</h2>
+            <canvas id="expenseCategoriesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Top Expenses -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Top Expenses</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3">Category</th>
+                            <th class="text-left py-3">Description</th>
+                            <th class="text-right py-3">Amount</th>
+                            <th class="text-left py-3">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in top_expenses %}
+                        <tr class="border-b">
+                            <td class="py-3">{{ expense.category.name }}</td>
+                            <td class="py-3">{{ expense.description }}</td>
+                            <td class="py-3 text-right">${{ expense.amount }}</td>
+                            <td class="py-3">{{ expense.date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Outstanding Invoices -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Outstanding Invoices</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3">Invoice #</th>
+                            <th class="text-left py-3">Client</th>
+                            <th class="text-right py-3">Amount</th>
+                            <th class="text-left py-3">Due Date</th>
+                            <th class="text-left py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in outstanding_invoices %}
+                        <tr class="border-b">
+                            <td class="py-3">
+                                <a href="{% url 'invoice_detail' invoice.id %}" 
+                                   class="text-blue-600 hover:text-blue-800">
+                                    {{ invoice.number }}
+                                </a>
+                            </td>
+                            <td class="py-3">{{ invoice.client.name }}</td>
+                            <td class="py-3 text-right">${{ invoice.amount }}</td>
+                            <td class="py-3">{{ invoice.due_date|date:"M d, Y" }}</td>
+                            <td class="py-3">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if invoice.is_overdue %}bg-red-100 text-red-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ invoice.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Date range toggle
+document.querySelector('[name="date_range"]').addEventListener('change', function(e) {
+    const customFields = document.querySelectorAll('.custom-date-range');
+    customFields.forEach(field => {
+        field.classList.toggle('hidden', e.target.value !== 'custom');
+    });
+});
+
+// Revenue vs Expenses Chart
+const revenueExpensesCtx = document.getElementById('revenueExpensesChart').getContext('2d');
+new Chart(revenueExpensesCtx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [
+            {
+                label: 'Revenue',
+                data: {{ revenue_data|safe }},
+                borderColor: '#10B981',
+                tension: 0.1
+            },
+            {
+                label: 'Expenses',
+                data: {{ expense_data|safe }},
+                borderColor: '#EF4444',
+                tension: 0.1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        }
+    }
+});
+
+// Expense Categories Chart
+const expenseCategoriesCtx = document.getElementById('expenseCategoriesChart').getContext('2d');
+new Chart(expenseCategoriesCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ category_labels|safe }},
+        datasets: [{
+            data: {{ category_data|safe }},
+            backgroundColor: {{ category_colors|safe }}
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right'
+            }
+        }
+    }
+});
+
+// Export functionality
+function exportData(format) {
+    const form = document.getElementById('reportFilters');
+    const formData = new FormData(form);
+    formData.append('format', format);
+    
+    window.location.href = `/api/reports/export/?${new URLSearchParams(formData)}`;
+}
+</script>
+{% endblock %}
+{% endblock %}

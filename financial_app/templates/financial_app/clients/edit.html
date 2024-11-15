@@ -1,0 +1,240 @@
+<!-- financial_app/templates/financial_app/clients/edit.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ client.name }} | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <form method="POST" id="clientForm" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Edit Client</h1>
+                <p class="text-gray-500">Client since {{ client.created_at|date:"F d, Y" }}</p>
+            </div>
+            <div class="space-x-2">
+                <button type="button" onclick="confirmDelete()" class="btn btn-danger">
+                    Delete Client
+                </button>
+                <a href="{% url 'client_detail' client.id %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Toggle -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Client Status</label>
+                    <p class="text-sm text-gray-500">Inactive clients won't appear in default lists</p>
+                </div>
+                <div class="flex items-center">
+                    <label class="switch">
+                        <input type="checkbox" name="is_active" {% if client.is_active %}checked{% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="ml-2 text-sm text-gray-700">
+                        {{ client.is_active|yesno:"Active,Inactive" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Company Name *</label>
+                    <input type="text" name="name" required
+                           value="{{ client.name }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email *</label>
+                    <input type="email" name="email" required
+                           value="{{ client.email }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Phone</label>
+                    <input type="tel" name="phone"
+                           value="{{ client.phone }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Website</label>
+                    <input type="url" name="website"
+                           value="{{ client.website }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Address</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Street Address</label>
+                    <input type="text" name="address_line1"
+                           value="{{ client.address_line1 }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Address Line 2</label>
+                    <input type="text" name="address_line2"
+                           value="{{ client.address_line2 }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">City</label>
+                    <input type="text" name="city"
+                           value="{{ client.city }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">State/Province</label>
+                    <input type="text" name="state"
+                           value="{{ client.state }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">ZIP/Postal Code</label>
+                    <input type="text" name="postal_code"
+                           value="{{ client.postal_code }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Country</label>
+                    <select name="country" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="">Select Country</option>
+                        {% for code, name in countries %}
+                        <option value="{{ code }}" 
+                                {% if code == client.country %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Information -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Billing Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Tax ID/VAT Number</label>
+                    <input type="text" name="tax_id"
+                           value="{{ client.tax_id }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Payment Terms</label>
+                    <select name="payment_terms" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="net30" {% if client.payment_terms == 'net30' %}selected{% endif %}>Net 30</option>
+                        <option value="net15" {% if client.payment_terms == 'net15' %}selected{% endif %}>Net 15</option>
+                        <option value="net7" {% if client.payment_terms == 'net7' %}selected{% endif %}>Net 7</option>
+                        <option value="due_on_receipt" {% if client.payment_terms == 'due_on_receipt' %}selected{% endif %}>Due on Receipt</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Currency</label>
+                    <select name="currency" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="USD" {% if client.currency == 'USD' %}selected{% endif %}>USD - US Dollar</option>
+                        <option value="EUR" {% if client.currency == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                        <option value="GBP" {% if client.currency == 'GBP' %}selected{% endif %}>GBP - British Pound</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Credit Limit</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" name="credit_limit"
+                               value="{{ client.credit_limit }}"
+                               min="0" step="0.01"
+                               class="pl-7 block w-full rounded-md border-gray-300">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">Additional Information</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" rows="4"
+                          class="mt-1 block w-full rounded-md border-gray-300">{{ client.notes }}</textarea>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    const hasInvoices = {{ client.invoices.count }} > 0;
+    let message = 'Are you sure you want to delete this client?';
+    
+    if (hasInvoices) {
+        message += '\n\nWarning: This client has existing invoices. Deleting the client will also delete all associated records.';
+    }
+    
+    if (confirm(message)) {
+        fetch(`/api/clients/{{ client.id }}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.href = "{% url 'client_list' %}";
+            }
+        });
+    }
+}
+
+document.getElementById('clientForm').addEventListener('submit', function(e) {
+    const requiredFields = ['name', 'email'];
+    let hasError = false;
+
+    requiredFields.forEach(field => {
+        const input = this.elements[field];
+        if (!input.value.trim()) {
+            input.classList.add('border-red-500');
+            hasError = true;
+        } else {
+            input.classList.remove('border-red-500');
+        }
+    });
+
+    if (hasError) {
+        e.preventDefault();
+        alert('Please fill in all required fields');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

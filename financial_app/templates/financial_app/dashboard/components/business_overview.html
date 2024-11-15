@@ -1,0 +1,96 @@
+{# File: financial_app/templates/financial_app/dashboard/components/business_overview.html #}
+{% load humanize %}
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+    <!-- Income Card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Income</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                    €{{ overview.total_income|default:"0"|floatformat:2|intcomma }}
+                </h3>
+            </div>
+            <div class="rounded-full p-3 bg-green-100">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center">
+            <span class="text-sm {% if overview.income_trend >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if overview.income_trend >= 0 %}↑{% else %}↓{% endif %}
+                {{ overview.income_trend|abs|floatformat:1 }}%
+            </span>
+            <span class="text-sm text-gray-500 ml-2">vs last period</span>
+        </div>
+    </div>
+
+    <!-- Expenses Card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Expenses</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                    €{{ overview.total_expenses|default:"0"|floatformat:2|intcomma }}
+                </h3>
+            </div>
+            <div class="rounded-full p-3 bg-red-100">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center">
+            <span class="text-sm {% if overview.expense_trend <= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if overview.expense_trend >= 0 %}↑{% else %}↓{% endif %}
+                {{ overview.expense_trend|abs|floatformat:1 }}%
+            </span>
+            <span class="text-sm text-gray-500 ml-2">vs last period</span>
+        </div>
+    </div>
+
+    <!-- Outstanding Invoices -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Outstanding Invoices</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                    €{{ overview.outstanding_invoices|default:"0"|floatformat:2|intcomma }}
+                </h3>
+            </div>
+            <div class="rounded-full p-3 bg-blue-100">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center">
+            <span class="text-sm text-gray-500">{{ overview.pending_invoices_count }} pending invoices</span>
+        </div>
+    </div>
+
+    <!-- Cash Flow -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Net Cash Flow</p>
+                <h3 class="text-2xl font-bold {% if overview.net_cash_flow >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2">
+                    €{{ overview.net_cash_flow|default:"0"|floatformat:2|intcomma }}
+                </h3>
+            </div>
+            <div class="rounded-full p-3 bg-purple-100">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center">
+            <span class="text-sm {% if overview.cash_flow_trend >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if overview.cash_flow_trend >= 0 %}↑{% else %}↓{% endif %}
+                {{ overview.cash_flow_trend|abs|floatformat:1 }}%
+            </span>
+            <span class="text-sm text-gray-500 ml-2">vs last period</span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+<!-- financial_app/templates/financial_app/user/edit_profile.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-2xl font-semibold mb-6">Edit Profile</h2>
+        {% if form.errors %}
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            <!-- Profile Picture -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                <div class="mt-2 flex items-center">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="h-12 w-12 rounded-full object-cover">
+                    {% else %}
+                        <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
+                            <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 0v24H0V0h24z" fill="none"/>
+                                <circle cx="12" cy="12" r="8"/>
+                            </svg>
+                        </span>
+                    {% endif %}
+                    <input type="file" name="avatar" class="ml-5">
+                </div>
+            </div>
+            <!-- Personal Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}"
+                           class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+            </div>
+            <!-- Contact Information -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" name="email" value="{{ user.email }}" required
+                       class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="text" name="phone_number" value="{{ user.profile.phone_number|default:'' }}"
+                       class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+            <!-- Address -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Address</label>
+                <textarea name="address" rows="3" class="mt-1 block w-full rounded-md border-gray-300">{{ user.profile.address|default:'' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">
+                Update Profile
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

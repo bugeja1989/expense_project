@@ -1,0 +1,145 @@
+<!-- financial_app/templates/financial_app/reports/income_statement.html -->
+{% extends 'financial_app/base.html' %}
+{% load static %}
+
+{% block title %}Income Statement | ExpenseAlly{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Income Statement</h1>
+        <div class="flex space-x-2">
+            <button onclick="exportData('pdf')" class="btn btn-secondary">
+                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </button>
+            <button onclick="exportData('csv')" class="btn btn-secondary">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <form id="incomeStatementFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Date Range</label>
+                <select name="date_range" class="mt-1 block w-full rounded-md border-gray-300">
+                    <option value="this_month">This Month</option>
+                    <option value="last_month">Last Month</option>
+                    <option value="this_quarter">This Quarter</option>
+                    <option value="last_quarter">Last Quarter</option>
+                    <option value="this_year">This Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+
+            <div class="custom-date-range hidden">
+                <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="date" name="start_date" class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+
+            <div class="custom-date-range hidden">
+                <label class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="date" name="end_date" class="mt-1 block w-full rounded-md border-gray-300">
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-sync-alt mr-2"></i>Update Report
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Total Revenue</p>
+                <p class="mt-1 text-3xl font-semibold">${{ total_revenue }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Total Expenses</p>
+                <p class="mt-1 text-3xl font-semibold">${{ total_expenses }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Net Income</p>
+                <p class="mt-1 text-3xl font-semibold">${{ net_income }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Income Statement -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-lg font-semibold mb-4">Detailed Income Statement</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-3">Account</th>
+                        <th class="text-right py-3">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Revenue -->
+                    <tr class="bg-gray-50">
+                        <td class="py-3 font-medium">Revenue</td>
+                        <td class="py-3 text-right font-medium">${{ total_revenue }}</td>
+                    </tr>
+                    {% for item in revenue_items %}
+                    <tr>
+                        <td class="py-3 pl-6">{{ item.name }}</td>
+                        <td class="py-3 text-right">${{ item.amount }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    <!-- Expenses -->
+                    <tr class="bg-gray-50">
+                        <td class="py-3 font-medium">Expenses</td>
+                        <td class="py-3 text-right font-medium">(${% if total_expenses %}{{ total_expenses }}{% else %}0{% endif %})</td>
+                    </tr>
+                    {% for item in expense_items %}
+                    <tr>
+                        <td class="py-3 pl-6">{{ item.name }}</td>
+                        <td class="py-3 text-right">(${% if item.amount %}{{ item.amount }}{% else %}0{% endif %})</td>
+                    </tr>
+                    {% endfor %}
+
+                    <!-- Net Income -->
+                    <tr class="border-t bg-gray-100">
+                        <td class="py-3 font-semibold">Net Income</td>
+                        <td class="py-3 text-right font-semibold">${{ net_income }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelector('[name="date_range"]').addEventListener('change', function(e) {
+    const customFields = document.querySelectorAll('.custom-date-range');
+    customFields.forEach(field => {
+        field.classList.toggle('hidden', e.target.value !== 'custom');
+    });
+});
+
+// Filter form submission
+document.getElementById('incomeStatementFilters').addEventListener('change', function() {
+    this.submit();
+});
+
+// Export functionality
+function exportData(format) {
+    const form = document.getElementById('incomeStatementFilters');
+    const formData = new FormData(form);
+    formData.append('format', format);
+
+    window.location.href = `/api/reports/income_statement/export/?${new URLSearchParams(formData)}`;
+}
+</script>
+{% endblock %}
+{% endblock %}
