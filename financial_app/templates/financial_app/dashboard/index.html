@@ -1,0 +1,291 @@
+{% extends 'financial_app/base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - ExpenseAlly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-12 mb-4">
+        <div class="btn-group">
+            <a href="{% url 'invoice_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Invoice
+            </a>
+            <a href="{% url 'expense_create' %}" class="btn btn-success">
+                <i class="fas fa-receipt"></i> Record Expense
+            </a>
+            <a href="{% url 'client_create' %}" class="btn btn-info">
+                <i class="fas fa-user-plus"></i> Add Client
+            </a>
+            <a href="{% url 'report_profit_loss' %}" class="btn btn-secondary">
+                <i class="fas fa-chart-line"></i> View Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="col-md-3">
+        <div class="card metric-card bg-primary text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-money-bill-wave"></i> Revenue (This Month)</h5>
+                <h3 class="mb-0">€{{ metrics.revenue|floatformat:2|intcomma }}</h3>
+                <small class="text-white-50">
+                    {% if metrics.revenue_change > 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% endif %}
+                    {{ metrics.revenue_change|abs }}% from last month
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card metric-card bg-success text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-pie"></i> Profit</h5>
+                <h3 class="mb-0">€{{ metrics.profit|floatformat:2|intcomma }}</h3>
+                <small class="text-white-50">
+                    Margin: {{ metrics.profit_margin|floatformat:1 }}%
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card metric-card bg-warning text-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-exclamation-circle"></i> Outstanding</h5>
+                <h3 class="mb-0">€{{ metrics.outstanding|floatformat:2|intcomma }}</h3>
+                <small class="text-dark-50">
+                    {{ metrics.overdue_count }} overdue invoices
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card metric-card bg-info text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-receipt"></i> Expenses</h5>
+                <h3 class="mb-0">€{{ metrics.expenses|floatformat:2|intcomma }}</h3>
+                <small class="text-white-50">
+                    {{ metrics.pending_expenses }} pending approval
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Revenue vs Expenses</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="revenueExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Expense Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="expenseBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Invoices</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'invoice_detail' invoice.id %}">
+                                        {{ invoice.invoice_number }}
+                                    </a>
+                                </td>
+                                <td>{{ invoice.client.name }}</td>
+                                <td>€{{ invoice.total_amount|floatformat:2 }}</td>
+                                <td>
+                                    <span class="badge bg-{{ invoice.get_status_color }}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No recent invoices</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Expenses</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'expense_detail' expense.id %}">
+                                        {{ expense.date|date:"Y-m-d" }}
+                                    </a>
+                                </td>
+                                <td>{{ expense.category.name }}</td>
+                                <td>€{{ expense.amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if expense.approved_by %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No recent expenses</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js_bottom %}
+<script>
+    // Revenue vs Expenses Chart
+    const revenueExpenseCtx = document.getElementById('revenueExpenseChart').getContext('2d');
+    new Chart(revenueExpenseCtx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_data.labels|safe }},
+            datasets: [{
+                label: 'Revenue',
+                data: {{ chart_data.revenue|safe }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Expenses',
+                data: {{ chart_data.expenses|safe }},
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Expense Breakdown Chart
+    const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
+    new Chart(expenseBreakdownCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ expense_breakdown.labels|safe }},
+            datasets: [{
+                data: {{ expense_breakdown.data|safe }},
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Refresh metrics periodically
+    setInterval(function() {
+        $.get("{% url 'dashboard_metrics' %}", function(data) {
+            // Update metrics
+            Object.keys(data.metrics).forEach(key => {
+                const element = document.querySelector(`[data-metric="${key}"]`);
+                if (element) {
+                    element.textContent = data.metrics[key];
+                }
+            });
+        });
+    }, 60000); // Refresh every minute
+</script>
+{% endblock %}

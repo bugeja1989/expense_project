@@ -1,0 +1,322 @@
+{% extends 'financial_app/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <form method="post" id="invoiceForm">
+            {% csrf_token %}
+            
+            <!-- Invoice Header -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Create New Invoice</h5>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary" name="action" value="save">
+                            Save Invoice
+                        </button>
+                        <button type="submit" class="btn btn-success" name="action" value="save_and_send">
+                            Save & Send
+                        </button>
+                        <a href="{% url 'invoice_list' %}" class="btn btn-light">Cancel</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Client</label>
+                                <select name="client" class="form-select select2" required>
+                                    <option value="">Select Client...</option>
+                                    {% for client in clients %}
+                                        <option value="{{ client.id }}" 
+                                                data-email="{{ client.email }}"
+                                                data-address="{{ client.address }}"
+                                                data-payment-terms="{{ client.payment_terms }}">
+                                            {{ client.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="mb-3">
+                                <label class="form-label">Invoice Number</label>
+                                <input type="text" class="form-control" value="{{ next_invoice_number }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Issue Date</label>
+                                <input type="date" name="issue_date" class="form-control" 
+                                       value="{{ today|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" name="due_date" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Tax Rate (%)</label>
+                                <input type="number" name="tax_rate" class="form-control" 
+                                       step="0.01" min="0" max="100"
+                                       value="{{ default_tax_rate }}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Items -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Invoice Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="itemsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Description</th>
+                                    <th style="width: 15%">Quantity</th>
+                                    <th style="width: 15%">Unit Price</th>
+                                    <th style="width: 15%">Tax (%)</th>
+                                    <th style="width: 15%">Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="item-row">
+                                    <td>
+                                        <input type="text" name="items[0][description]" 
+                                               class="form-control item-description" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="items[0][quantity]" 
+                                               class="form-control item-quantity"
+                                               step="0.01" min="0" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="items[0][unit_price]" 
+                                               class="form-control item-price"
+                                               step="0.01" min="0" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="items[0][tax_rate]" 
+                                               class="form-control item-tax"
+                                               step="0.01" min="0" value="0">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-total" 
+                                               readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6">
+                                        <button type="button" class="btn btn-sm btn-success" id="addItem">
+                                            <i class="fas fa-plus"></i> Add Item
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end">Subtotal:</td>
+                                    <td>
+                                        <input type="number" id="subtotal" class="form-control" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end">Tax:</td>
+                                    <td>
+                                        <input type="number" id="tax" class="form-control" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                    <td>
+                                        <input type="number" id="total" class="form-control" readonly>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Terms</label>
+                                <textarea name="terms" class="form-control" rows="3">{{ default_terms }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_recurring" class="form-check-input" 
+                                   id="isRecurring">
+                            <label class="form-check-label">Make this a recurring invoice</label>
+                        </div>
+                    </div>
+                    <div id="recurringOptions" class="d-none">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Frequency</label>
+                                    <select name="recurring_frequency" class="form-select">
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Next Date</label>
+                                    <input type="date" name="next_recurring_date" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2').select2();
+
+    // Handle client selection
+    $('select[name="client"]').change(function() {
+        const selectedOption = $(this).find(':selected');
+        const paymentTerms = selectedOption.data('payment-terms') || 30;
+        
+        // Set due date based on payment terms
+        const issueDate = new Date($('input[name="issue_date"]').val());
+        issueDate.setDate(issueDate.getDate() + paymentTerms);
+        $('input[name="due_date"]').val(issueDate.toISOString().split('T')[0]);
+    });
+
+    // Handle recurring invoice toggle
+    $('#isRecurring').change(function() {
+        $('#recurringOptions').toggleClass('d-none', !$(this).is(':checked'));
+    });
+
+    // Add new item row
+    $('#addItem').click(function() {
+        const newRow = $('.item-row:first').clone();
+        const rowCount = $('.item-row').length;
+        
+        // Update input names
+        newRow.find('input').each(function() {
+            const name = $(this).attr('name');
+            if (name) {
+                $(this).attr('name', name.replace('[0]', `[${rowCount}]`));
+            }
+            $(this).val('');
+        });
+        
+        newRow.insertBefore('#itemsTable tbody tr:last');
+        calculateTotals();
+    });
+
+    // Remove item row
+    $(document).on('click', '.remove-item', function() {
+        if ($('.item-row').length > 1) {
+            $(this).closest('tr').remove();
+            calculateTotals();
+        }
+    });
+
+    // Calculate item total
+    $(document).on('input', '.item-quantity, .item-price, .item-tax', function() {
+        calculateItemTotal($(this).closest('tr'));
+        calculateTotals();
+    });
+
+    function calculateItemTotal(row) {
+        const quantity = parseFloat(row.find('.item-quantity').val()) || 0;
+        const price = parseFloat(row.find('.item-price').val()) || 0;
+        const tax = parseFloat(row.find('.item-tax').val()) || 0;
+        
+        const subtotal = quantity * price;
+        const total = subtotal * (1 + tax / 100);
+        
+        row.find('.item-total').val(total.toFixed(2));
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        let tax = 0;
+        
+        $('.item-row').each(function() {
+            const quantity = parseFloat($(this).find('.item-quantity').val()) || 0;
+            const price = parseFloat($(this).find('.item-price').val()) || 0;
+            const itemTax = parseFloat($(this).find('.item-tax').val()) || 0;
+            
+            const itemSubtotal = quantity * price;
+            subtotal += itemSubtotal;
+            tax += itemSubtotal * (itemTax / 100);
+        });
+        
+        const total = subtotal + tax;
+        
+        $('#subtotal').val(subtotal.toFixed(2));
+        $('#tax').val(tax.toFixed(2));
+        $('#total').val(total.toFixed(2));
+    }
+
+    // Form validation
+    $('#invoiceForm').submit(function(e) {
+        const items = $('.item-row').length;
+        if (items === 0) {
+            e.preventDefault();
+            alert('Please add at least one item to the invoice');
+            return false;
+        }
+        
+        if ($('#isRecurring').is(':checked')) {
+            const nextDate = $('input[name="next_recurring_date"]').val();
+            if (!nextDate) {
+                e.preventDefault();
+                alert('Please set the next recurring date');
+                return false;
+            }
+        }
+        
+        return true;
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

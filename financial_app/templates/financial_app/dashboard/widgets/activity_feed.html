@@ -1,0 +1,141 @@
+{% load humanize %}
+
+<div class="activity-feed">
+    {% for activity in activities %}
+    <div class="activity-item d-flex py-3 {% if not forloop.last %}border-bottom{% endif %}">
+        <!-- Activity Icon -->
+        <div class="activity-icon me-3">
+            {% if activity.type == 'invoice' %}
+                <div class="avatar bg-light-primary">
+                    <i class="fas fa-file-invoice text-primary"></i>
+                </div>
+            {% elif activity.type == 'payment' %}
+                <div class="avatar bg-light-success">
+                    <i class="fas fa-money-bill text-success"></i>
+                </div>
+            {% elif activity.type == 'expense' %}
+                <div class="avatar bg-light-warning">
+                    <i class="fas fa-receipt text-warning"></i>
+                </div>
+            {% elif activity.type == 'client' %}
+                <div class="avatar bg-light-info">
+                    <i class="fas fa-user text-info"></i>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Activity Content -->
+        <div class="activity-content flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="mb-0">
+                    <strong>{{ activity.title }}</strong>
+                    {% if activity.amount %}
+                        <span class="ms-2">€{{ activity.amount|floatformat:2|intcomma }}</span>
+                    {% endif %}
+                </p>
+                <small class="text-muted" title="{{ activity.timestamp|date:'Y-m-d H:i' }}">
+                    {{ activity.timestamp|naturaltime }}
+                </small>
+            </div>
+            
+            {% if activity.description %}
+            <p class="text-muted small mb-0">{{ activity.description }}</p>
+            {% endif %}
+
+            {% if activity.link %}
+            <div class="mt-1">
+                <a href="{{ activity.link }}" class="btn btn-sm btn-light-primary">
+                    View Details
+                </a>
+            </div>
+            {% endif %}
+
+            {% if activity.status %}
+            <span class="badge bg-{{ activity.status_color }} mt-1">
+                {{ activity.status }}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Activity Actions -->
+        {% if activity.actions %}
+        <div class="activity-actions ms-3">
+            <div class="dropdown">
+                <button class="btn btn-sm btn-icon" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% for action in activity.actions %}
+                    <li>
+                        <a class="dropdown-item" href="{{ action.url }}">
+                            <i class="fas fa-{{ action.icon }} me-2"></i>
+                            {{ action.label }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-stream fa-3x text-muted"></i>
+        </div>
+        <p class="text-muted">No recent activity to display</p>
+    </div>
+    {% endfor %}
+
+    {% if has_more %}
+    <div class="text-center pt-3">
+        <button class="btn btn-light-primary load-more-activities" 
+                data-page="{{ next_page }}"
+                onclick="loadMoreActivities(this)">
+            Load More
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function loadMoreActivities(button) {
+    const page = button.dataset.page;
+    
+    $.ajax({
+        url: '{% url "dashboard_activity_feed" %}',
+        data: { page: page },
+        success: function(response) {
+            // Insert new activities before the load more button
+            $(button).parent().before(response.html);
+            
+            if (response.has_more) {
+                button.dataset.page = response.next_page;
+            } else {
+                $(button).parent().remove();
+            }
+        },
+        error: function() {
+            alert('Error loading more activities');
+        }
+    });
+}
+
+// Real-time updates
+const activitySocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/activity/'
+);
+
+activitySocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.type === 'new_activity') {
+        // Prepend new activity to the feed
+        $('.activity-feed').prepend(data.html);
+        // Remove oldest activity if needed
+        const activities = $('.activity-item');
+        if (activities.length > 50) {
+            activities.last().remove();
+        }
+    }
+};
+</script>

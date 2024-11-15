@@ -1,0 +1,198 @@
+{% load humanize %}
+
+<!-- Revenue Widget -->
+<div class="card h-100">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex flex-column">
+                        <div class="text-muted mb-1">Revenue</div>
+                        <h2 class="mb-0" data-metric="revenue">€{{ metrics.revenue|floatformat:2|intcomma }}</h2>
+                    </div>
+                    <div class="rounded-circle bg-light-primary p-3">
+                        <i class="fas fa-chart-line fa-2x text-primary"></i>
+                    </div>
+                </div>
+                <!-- Revenue Trend -->
+                <div class="d-flex mt-3">
+                    <small class="text-muted">vs last period</small>
+                    {% if metrics.revenue_trend > 0 %}
+                        <small class="text-success ms-2">
+                            <i class="fas fa-arrow-up"></i> {{ metrics.revenue_trend|floatformat:1 }}%
+                        </small>
+                    {% else %}
+                        <small class="text-danger ms-2">
+                            <i class="fas fa-arrow-down"></i> {{ metrics.revenue_trend|abs|floatformat:1 }}%
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cash Flow Widget -->
+<div class="card h-100">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Cash Flow</p>
+                        <h4 class="mb-0" data-metric="cash_flow">€{{ metrics.cash_flow|floatformat:2|intcomma }}</h4>
+                    </div>
+                    <div class="avatar avatar-stats bg-light-success">
+                        <i class="fas fa-money-bill-wave text-success"></i>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: {{ metrics.cash_flow_health }}%"
+                         title="{{ metrics.cash_flow_health }}% healthy">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Outstanding Invoices Widget -->
+<div class="card h-100">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted mb-2">Outstanding</p>
+                        <h4 class="mb-0" data-metric="outstanding">€{{ metrics.outstanding|floatformat:2|intcomma }}</h4>
+                    </div>
+                    <div class="avatar avatar-stats bg-light-warning">
+                        <i class="fas fa-clock text-warning"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Overdue:</small>
+                    <small class="text-danger ms-1" data-metric="overdue">
+                        €{{ metrics.overdue|floatformat:2|intcomma }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Summary Widget -->
+<div class="card h-100">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted mb-2">Expenses</p>
+                        <h4 class="mb-0" data-metric="expenses">€{{ metrics.expenses|floatformat:2|intcomma }}</h4>
+                    </div>
+                    <div class="avatar avatar-stats bg-light-info">
+                        <i class="fas fa-receipt text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Budget Used:</small>
+                    <div class="progress mt-1" style="height: 6px;">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ metrics.budget_used }}%"
+                             title="{{ metrics.budget_used }}% of budget used">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Widgets -->
+<div class="row mt-4">
+    <!-- Revenue Trend Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueTrendChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Categories Chart -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Expense Categories</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="expenseCategoriesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Widget -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Recent Activity</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="timeline timeline-center">
+            {% for activity in recent_activity %}
+                <div class="timeline-item">
+                    <div class="timeline-point">
+                        <i class="fas {{ activity.icon }}"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6 class="mb-1">{{ activity.title }}</h6>
+                        <p class="text-muted mb-0">
+                            {{ activity.description }}
+                            <small class="ms-2">{{ activity.timestamp|timesince }} ago</small>
+                        </p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="p-3 text-center text-muted">
+                    No recent activity
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Widget -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="{% url 'invoice_create' %}" class="btn btn-primary w-100">
+                    <i class="fas fa-plus me-2"></i>New Invoice
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'expense_create' %}" class="btn btn-success w-100">
+                    <i class="fas fa-receipt me-2"></i>Add Expense
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'client_create' %}" class="btn btn-info w-100">
+                    <i class="fas fa-user-plus me-2"></i>New Client
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'report_generate' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-file-pdf me-2"></i>Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

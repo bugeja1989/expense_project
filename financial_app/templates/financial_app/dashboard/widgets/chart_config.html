@@ -1,0 +1,124 @@
+<script>
+    // Revenue Trend Chart Configuration
+    const revenueTrendConfig = {
+        type: 'line',
+        data: {
+            labels: {{ revenue_trend.labels|safe }},
+            datasets: [{
+                label: 'Revenue',
+                data: {{ revenue_trend.data|safe }},
+                borderColor: 'rgba(28, 187, 140, 1)',
+                backgroundColor: 'rgba(28, 187, 140, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return '€' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '€' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    };
+    
+    // Expense Categories Chart Configuration
+    const expenseCategoriesConfig = {
+        type: 'doughnut',
+        data: {
+            labels: {{ expense_categories.labels|safe }},
+            datasets: [{
+                data: {{ expense_categories.data|safe }},
+                backgroundColor: [
+                    '#FF6B6B',
+                    '#4ECDC4',
+                    '#45B7D1',
+                    '#96CEB4',
+                    '#FFEEAD',
+                    '#D4A5A5'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value * 100) / total).toFixed(1);
+                            return `€${value.toLocaleString()} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    };
+    
+    // Initialize Charts
+    document.addEventListener('DOMContentLoaded', function() {
+        new Chart(
+            document.getElementById('revenueTrendChart').getContext('2d'),
+            revenueTrendConfig
+        );
+    
+        new Chart(
+            document.getElementById('expenseCategoriesChart').getContext('2d'),
+            expenseCategoriesConfig
+        );
+    });
+    
+    // Refresh Chart Data
+    function refreshChartData() {
+        $.ajax({
+            url: '{% url "dashboard_chart_data" %}',
+            method: 'GET',
+            success: function(data) {
+                // Update Revenue Trend Chart
+                revenueTrendChart.data.labels = data.revenue_trend.labels;
+                revenueTrendChart.data.datasets[0].data = data.revenue_trend.data;
+                revenueTrendChart.update();
+    
+                // Update Expense Categories Chart
+                expenseCategoriesChart.data.labels = data.expense_categories.labels;
+                expenseCategoriesChart.data.datasets[0].data = data.expense_categories.data;
+                expenseCategoriesChart.update();
+            }
+        });
+    }
+    
+    // Refresh every 5 minutes
+    setInterval(refreshChartData, 300000);
+    </script>
